@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Use the updated version of RPI-Monitor config
+if [[ -d /etc/rpimonitor/template/ ]]; then
+  cp -f /root/nems/nems-migrator/data/rpimonitor/template/version.conf /etc/rpimonitor/template/
+  /usr/bin/systemctl restart rpimonitor
+fi

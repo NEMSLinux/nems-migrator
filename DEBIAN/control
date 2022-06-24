@@ -1,0 +1,9 @@
+Package: nems-migrator
+Essential: yes
+Priority: required
+Section: main
+Maintainer: NEMS Linux <nems@category5.tv>
+Architecture: all
+Version: 1.6.021
+Provides: nems-migrator
+Description: NEMS Migrator
