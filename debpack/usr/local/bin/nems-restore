@@ -1,7 +1,4 @@
 #!/bin/bash
-echo "Beta Release - NEMS Migrator Restore is coming soon..."
-exit
-
 if [[ ! -e /usr/local/bin/nems-info ]]; then
   echo "Requires NEMS Linux. https://nemslinux.com/"
   exit 0
@@ -27,10 +24,6 @@ fi
   echo ""
   echo -e "\e[1mNEMS Migrator Restore\e[0m By Robbie Ferguson"
   echo ""
-
-if (( $(awk 'BEGIN {print ("'$ver'" >= "'1.4'")}') )); then
-  nagios=nagios
-fi
 
 if (( ! $(awk 'BEGIN {print ("'$ver'" >= "'1.2.1'")}') )); then
    echo "ERROR: nems-restore requires NEMS 1.2.1 or higher"
@@ -86,22 +79,22 @@ else
         # Change to a folder where we know the file will not reside
         # This way we can detect if path was given
         cd /dev/
-	if [[ -e $1 ]]; then
+        if [[ -e $1 ]]; then
 
-	  if [[ $2 == 'force' ]]; then
+          if [[ $2 == 'force' ]]; then
             response=Y
           else
-		echo Let me be VERY clear here...
-		echo This will WIPE OUT the configuration on this NEMS deployment.
-		echo The configuration will be replaced with the one stored in your NEMS backup.
-		echo ""
-		echo Please do this on a fresh deployment of NEMS to prevent data loss.
-		echo "I am not responsible for this script breaking everything you have done :)"
-		echo Backup, backup, backup.
+                echo Let me be VERY clear here...
+                echo This will WIPE OUT the configuration on this NEMS deployment.
+                echo The configuration will be replaced with the one stored in your NEMS backup.
+                echo ""
+                echo Please do this on a fresh deployment of NEMS to prevent data loss.
+                echo "I am not responsible for this script breaking everything you have done :)"
+                echo Backup, backup, backup.
 
-		echo ""
+                echo ""
 
-		read -r -p "Are you sure you want to attempt restore? [y/N] " response
+                read -r -p "Are you sure you want to attempt restore? [y/N] " response
           fi
 
     if [[ $response =~ ^([yY][eE][sS]|[yY])$ ]]; then
@@ -130,9 +123,11 @@ else
     rm /tmp/nems_migrator_restore/tmp/private.tar.gz.gpg
 
     if ! tar -tf /tmp/nems_migrator_restore/tmp/private.tar.gz &> /dev/null; then
+      echo ""
       echo "Error with backup. Are you sure you're using the hardware and OSB Key that match this backup?"
-      echo "Does the Encryption/Decryption password you entered in NEMS SST match what it was when the"
-      echo "backup was created?"
+      echo "Does the Encryption/Decryption password you entered match what it was when the backup was"
+      echo "created?"
+      echo ""
       echo "Cannot proceed."
       echo ""
       exit
@@ -150,49 +145,50 @@ else
   rm /tmp/nems_migrator_restore/tmp/private.tar.gz
   (cd /tmp/nems_migrator_restore/tmp/ && tar c .) | (cd /tmp/nems_migrator_restore/ && tar xf -)
 
-				# Legacy compatibility
-				if [[ -f "/tmp/nems_migrator_restore/var/www/html/inc/ver.txt" ]]; then
-				 backupver=$(cat "/tmp/nems_migrator_restore/var/www/html/inc/ver.txt")
+                                # Legacy compatibility
+                                if [[ -f "/tmp/nems_migrator_restore/var/www/html/inc/ver.txt" ]]; then
+                                 backupver=$(cat "/tmp/nems_migrator_restore/var/www/html/inc/ver.txt")
 
-				 # Current nems.conf version storage
-				 elif [[ -f "/tmp/nems_migrator_restore/usr/local/share/nems/nems.conf" ]]; then
-				   backupver=$(cat /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf | grep version |  printf '%s' $(cut -n -d '=' -f 2))
+                                 # Current nems.conf version storage
+                                 elif [[ -f "/tmp/nems_migrator_restore/usr/local/share/nems/nems.conf" ]]; then
+                                   backupver=$(cat /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf | grep version |  printf '%s' $(cut -n -d '=' -f 2))
 
          # NEMS 1.2.x old storage location (moved with fixes.sh)
-				 elif [[ -f "/tmp/nems_migrator_restore/home/pi/nems.conf" ]]; then
-				   backupver=$(cat /tmp/nems_migrator_restore/home/pi/nems.conf | grep version |  printf '%s' $(cut -n -d '=' -f 2))
+                                 elif [[ -f "/tmp/nems_migrator_restore/home/pi/nems.conf" ]]; then
+                                   backupver=$(cat /tmp/nems_migrator_restore/home/pi/nems.conf | grep version |  printf '%s' $(cut -n -d '=' -f 2))
 
-				 # We don't really know the true version, but we know this is from NEMS, so set 1.2
-				 elif [[ -d "/var/log/nems/" ]]; then
-					 backupver=1.2
+                                 # We don't really know the true version, but we know this is from NEMS, so set 1.2
+                                 elif [[ -d "/var/log/nems/" ]]; then
+                                         backupver=1.2
 
         fi
 
-				 if (( ! $(awk 'BEGIN {print ("$backupver" >= "'1.0'")}') )); then
-				   echo Backup file is from NEMS $backupver. Proceeding.
-				   service $nagios stop
+                                 if (( ! $(awk 'BEGIN {print ("$backupver" >= "'1.0'")}') )); then
+                                   echo Backup file is from NEMS $backupver. Proceeding.
+                                   service $nagios stop
 
-				   # I know I warned you, but I love you too much to let you risk it.
+                                   # I know I warned you, but I love you too much to let you risk it.
                                    DATE=`date '+%Y-%m-%d %H:%M:%S'`
                                    USERNAME=`/usr/local/bin/nems-info username`
                                    REDUNDANCY="/home/$USERNAME/$DATE - backup.nems"
-				   cp -p /var/www/html/backup/snapshot/backup.nems "$REDUNDANCY"
+                                   cp -p /var/www/html/backup/snapshot/backup.nems "$REDUNDANCY"
 
-				   if (( $(awk 'BEGIN {print ("'$backupver'" >= "'1.4'")}') )); then
+                                   if (( $(awk 'BEGIN {print ("'$backupver'" >= "'1.4'")}') )); then
                                      confsrc=/etc/nems/conf
                                      resourcesrc=/usr/local/nagios/etc
-				   else
-				     confsrc=/etc/nagios3
-				     resourcesrc=/etc/nagios3
-				   fi
+                                   else
+                                     confsrc=/etc/nagios3
+                                     resourcesrc=/etc/nagios3
+                                   fi
 
-#				   echo "Source: /tmp/nems_migrator_restore$confsrc"
-				   if [[ -d "/tmp/nems_migrator_restore$confsrc" ]]; then
+#                                  echo "Source: /tmp/nems_migrator_restore$confsrc"
+                                   if [[ -d "/tmp/nems_migrator_restore$confsrc" ]]; then
 
 
                                          # Clobber the existing configs which will not be consolidated (<=1.4.1, will be overwritten in 1.5+)
                                          rm $confdest/global/timeperiods.cfg && cp /tmp/nems_migrator_restore/$confsrc/global/timeperiods.cfg $confdest/global/ && chown www-data:www-data $confdest/global/timeperiods.cfg
                                          # rm /etc/nagios3/parent_hosts.cfg && cp /tmp/nems_migrator_restore/etc/nagios3/parent_hosts.cfg /etc/nagios3/ && chown www-data:www-data /etc/nagios3/parent_hosts.cfg
+                                         rm $confdest/global/contacts.cfg && cp /tmp/nems_migrator_restore/$confsrc/global/contacts.cfg $confdest/global/ && chown www-data:www-data $confdest/global/contacts.cfg
 
                                          # Reconcile and clobber all other config files
                                          /root/nems/nems-migrator/data/reconcile-nagios.sh $ver $confsrc $confdest
@@ -201,8 +197,8 @@ else
                                          /bin/sed -i -- 's/nemsadmin/'"$username"'/g' $confdest/global/contactgroups.cfg
                                          /bin/sed -i -- 's/nemsadmin/'"$username"'/g' $confdest/global/contacts.cfg
 
-					 # Clear MySQL database and import new consolidated configs into NConf
-					 /root/nems/nems-migrator/data/nconf-import.sh $ver $confdest
+                                         # Clear MySQL database and import new consolidated configs into NConf
+                                         /root/nems/nems-migrator/data/nconf-import.sh $ver $confdest
 
                                          # Activate default nagios monitor on all hosts
                                          /root/nems/nems-migrator/data/nconf-activate.sh $ver
@@ -213,68 +209,68 @@ else
            fi
 
 
-					 if [[ $backupver == "1.0" ]]; then
-					 	echo "Upgrading to newer version of NEMS. You'll need to use NEMS-SST to re-configure your email settings."
-					  elif [[ -e "/tmp/nems_migrator_restore$resourcesrc/resource.cfg" ]]; then
-							 /root/nems/nems-migrator/data/reconcile-resource.sh $resourcesrc $resourcedest
-						else
-						  echo "NEMS-SST Configuration Missing. This is a critical error."
-						exit
-					 fi
+                                         if [[ $backupver == "1.0" ]]; then
+                                                echo "Upgrading to newer version of NEMS. You'll need to use NEMS-SST to re-configure your email settings."
+                                          elif [[ -e "/tmp/nems_migrator_restore$resourcesrc/resource.cfg" ]]; then
+                                                         /root/nems/nems-migrator/data/reconcile-resource.sh $resourcesrc $resourcedest
+                                                else
+                                                  echo "NEMS-SST Configuration Missing. This is a critical error."
+                                                exit
+                                         fi
 
 
-					 # NagVis maps are stored differently in NEMS 1.0
-					 if [[ $backupver == "1.0" ]]; then
-							nagvissrc="maps/"
-						 else
-							nagvissrc="etc/maps/"
-					 fi
-					 if [[ $ver == "1.0" ]]; then
-							nagvisdest=""
-						 else
-							nagvisdest="etc/"
-					 fi
-				   if [[ -d "/tmp/nems_migrator_restore/etc/nagvis/$nagvissrc" ]]; then
+                                         # NagVis maps are stored differently in NEMS 1.0
+                                         if [[ $backupver == "1.0" ]]; then
+                                                        nagvissrc="maps/"
+                                                 else
+                                                        nagvissrc="etc/maps/"
+                                         fi
+                                         if [[ $ver == "1.0" ]]; then
+                                                        nagvisdest=""
+                                                 else
+                                                        nagvisdest="etc/"
+                                         fi
+                                   if [[ -d "/tmp/nems_migrator_restore/etc/nagvis/$nagvissrc" ]]; then
                                                  if [[ -f /etc/nagvis/$nagvisdest/auth.db ]]; then
-						  # NEMS is initialized! save the auth file from the running instance
-						   if [[ -f /tmp/auth.db ]]; then
-						     # There's an old copy. Delete it to prevent accidentally restoring an old copy.
-						     rm /tmp/auth.db
-						   fi
+                                                  # NEMS is initialized! save the auth file from the running instance
+                                                   if [[ -f /tmp/auth.db ]]; then
+                                                     # There's an old copy. Delete it to prevent accidentally restoring an old copy.
+                                                     rm /tmp/auth.db
+                                                   fi
                                                    cp -f /etc/nagvis/$nagvisdest/auth.db /tmp/auth.db
-						 fi
-						 rm -rf /etc/nagvis/$nagvisdest/maps
-						 cp -Rp /tmp/nems_migrator_restore/etc/nagvis/$nagvissrc /etc/nagvis/$nagvisdest
+                                                 fi
+                                                 rm -rf /etc/nagvis/$nagvisdest/maps
+                                                 cp -Rp /tmp/nems_migrator_restore/etc/nagvis/$nagvissrc /etc/nagvis/$nagvisdest
                                                  if [[ -f /tmp/auth.db ]]; then
-						  # Replace the backup version, which was just restored, with our backup from the running instance
+                                                  # Replace the backup version, which was just restored, with our backup from the running instance
                                                    cp -f /tmp/auth.db /etc/nagvis/$nagvisdest/auth.db
-						 fi
-				   else
-							 echo "NagVis failed. Your NagVis data is corrupt."
-					 fi
+                                                 fi
+                                   else
+                                                         echo "NagVis failed. Your NagVis data is corrupt."
+                                         fi
 
-					 if [[ -d "/tmp/nems_migrator_restore/var/www/nconf/output" ]]; then
-						 rm -rf /var/www/nconf/output/
-						 cp -Rp /tmp/nems_migrator_restore/var/www/nconf/output /var/www/nconf/
-				   else
-							 echo "NConf failed. Your NConf data is missing (perhaps you never generated a config before the backup)."
-							 echo "You can re-create it by running the Generate command in NEMS NConf - nothing to worry about."
-					 fi
+                                         if [[ -d "/tmp/nems_migrator_restore/var/www/nconf/output" ]]; then
+                                                 rm -rf /var/www/nconf/output/
+                                                 cp -Rp /tmp/nems_migrator_restore/var/www/nconf/output /var/www/nconf/
+                                   else
+                                                         echo "NConf failed. Your NConf data is missing (perhaps you never generated a config before the backup)."
+                                                         echo "You can re-create it by running the Generate command in NEMS NConf - nothing to worry about."
+                                         fi
 
-				   # Get the username that the NEMS Server was using before it was backed up
-				   # Get NEMS username
-				   # From nems.conf
-				   oldusername=`cat /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf | grep username |  printf '%s' $(cut -n -d '=' -f 2)`
-				   # Legacy support: from htpasswd
-				   if [[ $oldusername == "" ]]; then
-				     oldusername=`cat /tmp/nems_migrator_restore/var/www/htpasswd | cut -d: -f1`
-				   fi
-				   if [[ $oldusername != $username ]]; then
-				     echo "The username of the new NEMS server ($username) differs from the old one ($oldusername)."
-				     printf "Reconciling the data..."
-				     # basically, do the init changes but with the old username to the new
-				     # This could be very problematic if the user has entered a common word as name
-				     # eg., "the" as a name would result in all instances of "the" being replaced.
+                                   # Get the username that the NEMS Server was using before it was backed up
+                                   # Get NEMS username
+                                   # From nems.conf
+                                   oldusername=`cat /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf | grep username |  printf '%s' $(cut -n -d '=' -f 2)`
+                                   # Legacy support: from htpasswd
+                                   if [[ $oldusername == "" ]]; then
+                                     oldusername=`cat /tmp/nems_migrator_restore/var/www/htpasswd | cut -d: -f1`
+                                   fi
+                                   if [[ $oldusername != $username ]]; then
+                                     echo "The username of the new NEMS server ($username) differs from the old one ($oldusername)."
+                                     printf "Reconciling the data..."
+                                     # basically, do the init changes but with the old username to the new
+                                     # This could be very problematic if the user has entered a common word as name
+                                     # eg., "the" as a name would result in all instances of "the" being replaced.
 
   # Configure RPi-Monitor to run as the new user
   /bin/sed -i -- 's/'"$oldusername"'/'"$username"'/g' /etc/rpimonitor/daemon.conf
@@ -287,72 +283,72 @@ else
   if [[ -d /etc/check_mk ]]; then # Removed in NEMS 1.4+
     /bin/sed -i -- 's/'"$oldusername"'/'"$username"'/g' /etc/check_mk/multisite.d/wato/users.mk
   fi
-				     echo " Done."
-				     echo "Please note: This patch is applied via a find and replace."
-				     echo "             Therefore, if your old username was something that could be found erroneously,"
-				     echo "             eg., 'nagios', your configs may be broken by the replace operation since it will"
-				     echo "             find and replace ALL instances of 'nagios'. I cannot possibly account for this."
-				     echo "             To avoid this problem, use very unique usernames."
-				     echo "             If this has occurred, please re-initialize NEMS as '$oldusername' and restore"
-				     echo "             your backup again. There's really no other way."
-				   fi
+                                     echo " Done."
+                                     echo "Please note: This patch is applied via a find and replace."
+                                     echo "             Therefore, if your old username was something that could be found erroneously,"
+                                     echo "             eg., 'nagios', your configs may be broken by the replace operation since it will"
+                                     echo "             find and replace ALL instances of 'nagios'. I cannot possibly account for this."
+                                     echo "             To avoid this problem, use very unique usernames."
+                                     echo "             If this has occurred, please re-initialize NEMS as '$oldusername' and restore"
+                                     echo "             your backup again. There's really no other way."
+                                   fi
 
 
-				   # This may cause errors, but at least it gives them the old logs.
-				   cp -Rfp /tmp/nems_migrator_restore/var/log/* /var/log
+                                   # This may cause errors, but at least it gives them the old logs.
+                                   cp -Rfp /tmp/nems_migrator_restore/var/log/* /var/log
 
-				   service mysql start
-				   service $nagios start
+                                   service mysql start
+                                   service $nagios start
 
-				  cp -fr /root/nems/nems-migrator/data/nagios/etc/* /usr/local/nagios/etc/
-				  /bin/sed -i -- 's/nemsadmin/'"$username"'/g' /usr/local/nagios/etc/cgi.cfg
+                                  cp -fr /root/nems/nems-migrator/data/nagios/etc/* /usr/local/nagios/etc/
+                                  /bin/sed -i -- 's/nemsadmin/'"$username"'/g' /usr/local/nagios/etc/cgi.cfg
 
-				  # Remove nconf history, should it exist
-				  mysql -u nconf -pnagiosadmin nconf -e "TRUNCATE History"
+                                  # Remove nconf history, should it exist
+                                  mysql -u nconf -pnagiosadmin nconf -e "TRUNCATE History"
 
-				    # Update user info in NEMS NConf
-				    echo "  Updating contact: $username"
-				    mysql -t -u nconf -pnagiosadmin nconf -e "UPDATE ConfigValues SET attr_value='$username' WHERE fk_id_attr=47;"
-				    mysql -t -u nconf -pnagiosadmin nconf -e "UPDATE ConfigValues SET attr_value='$email' WHERE fk_id_attr=55;"
+                                    # Update user info in NEMS NConf
+                                    echo "  Updating contact: $username"
+                                    mysql -t -u nconf -pnagiosadmin nconf -e "UPDATE ConfigValues SET attr_value='$username' WHERE fk_id_attr=47;"
+                                    mysql -t -u nconf -pnagiosadmin nconf -e "UPDATE ConfigValues SET attr_value='$email' WHERE fk_id_attr=55;"
 
 
-				   echo ""
-				   echo I hope everything worked okay for you.
-				   echo Please let me know if you had any trouble.
-				   echo ""
-				   echo PS - I saved a backup for you of the old config.
+                                   echo ""
+                                   echo I hope everything worked okay for you.
+                                   echo Please let me know if you had any trouble.
+                                   echo ""
+                                   echo PS - I saved a backup for you of the old config.
                                    echo $REDUNDANCY
-				   echo      ... just in case
-				   echo ""
+                                   echo      ... just in case
+                                   echo ""
 
                                    # Re-detect the hardware since files may be from other platform
                                    /usr/local/share/nems/nems-scripts/hw_model.sh
 
-				 else
-				   echo Your backup file is either invalid, or an unsupported version. Aborted.
-				 fi
+                                 else
+                                   echo Your backup file is either invalid, or an unsupported version. Aborted.
+                                 fi
 
-				 rm -rf /tmp/nems_migrator_restore
+                                 rm -rf /tmp/nems_migrator_restore
 
-				 end=`date +%s`
-				 runtime=$((end-start))
+                                 end=`date +%s`
+                                 runtime=$((end-start))
 
-				 if [[ -d "/var/log/nems" ]]; then
-						 echo $runtime > /var/log/nems/migrator-restore-runtime.log
-					 else
-						 mkdir /var/log/nems
-						 echo $runtime > /var/log/nems/migrator-restore-runtime.log
-				 fi
+                                 if [[ -d "/var/log/nems" ]]; then
+                                                 echo $runtime > /var/log/nems/migrator-restore-runtime.log
+                                         else
+                                                 mkdir /var/log/nems
+                                                 echo $runtime > /var/log/nems/migrator-restore-runtime.log
+                                 fi
 
-		else
-				echo Aborted.
-		fi
+                else
+                                echo Aborted.
+                fi
 
-	else
-	  echo ERROR: $1 does not exist.
+        else
+          echo ERROR: $1 does not exist.
           echo Did you specify the full path?
           echo Aborting.
-	fi
+        fi
 
 fi
 
