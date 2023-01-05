@@ -36,7 +36,7 @@ if [[ -f /tmp/osb.backup.nems.gpg ]]; then
   rm /tmp/osb.backup.nems.gpg
 fi
 # Load Account Data
-  data=$(curl -s -F "hwid=$hwid" -F "osbkey=$osbkey" https://nemslinux.com/api-backend/offsite-backup-checkin.php)
+  data=$(curl -s -F "hwid=$hwid" -F "osbkey=$osbkey" https://cloud.nemslinux.com/api/offsite-backup-checkin.php)
   set -f
   menu=''
   counter=0
@@ -95,7 +95,7 @@ fi
       filelocaldate="${datarr[2]}"
       echo "Downloading OSB from $filelocaldate..."
       echo ""
-      curl -F "hwid=$hwid" -F "osbkey=$osbkey" -F "date=$serverdate" https://nemslinux.com/api-backend/offsite-backup-restore.php -o /tmp/osb.backup.nems.gpg
+      curl -F "hwid=$hwid" -F "osbkey=$osbkey" -F "date=$serverdate" https://cloud.nemslinux.com/api/offsite-backup-restore.php -o /tmp/osb.backup.nems.gpg
       echo ""
       echo "Attempting decryption..."
       echo ""
