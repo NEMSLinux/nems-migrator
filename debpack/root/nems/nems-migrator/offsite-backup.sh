@@ -16,8 +16,8 @@ if [[ $osbpass == '' ]] || [[ $osbkey == '' ]]; then
 fi;
 
 # Check account status
-data=$(curl -s -F "hwid=$hwid" -F "osbkey=$osbkey" -F "query=status" https://cloud.nemslinux.com/api/offsite-backup-checkin.php)
-if [[ $data == '1' ]]; then # this account passes authentication
+cloudauth=$(/usr/local/bin/nems-info cloudauth)
+if [[ $cloudauth == '1' ]]; then # this account passes authentication
 
 if pidof -o %PPID -x "backup.sh">/dev/null; then
     echo "Standby... backup is running."
@@ -66,26 +66,30 @@ fi
   online=`/usr/local/bin/nems-info online`
 
   if [[ $response == 1 ]]; then
-    echo "`date`::$response::Success::File was accepted::$date::$size::$usage::$retained" >> /var/log/nems/nems-osb.log
+    echo "`date`::1::Success::File was accepted::$date::$size::$usage::$retained" >> /var/log/nems/nems-osb.log
     if [[ $1 != 'now' ]]; then
       /usr/local/share/nems/nems-scripts/osb-stats.sh now
     fi
   elif [[ $response == 0 ]]; then
-    echo "`date`::$response::Failed::Upload failed" >> /var/log/nems/nems-osb.log
+    echo "`date`::2::Failed::Upload failed" >> /var/log/nems/nems-osb.log
   elif [[ $response == 2 ]]; then
-    echo "`date`::$response::Failed::File permissions issue on receiving server" >> /var/log/nems/nems-osb.log
+    echo "`date`::2::Failed::File permissions issue on receiving server" >> /var/log/nems/nems-osb.log
   elif [[ $response == 3 ]]; then
-    echo "`date`::$response::Failed::Could not access authentication service" >> /var/log/nems/nems-osb.log
+    echo "`date`::2::Failed::Could not access authentication service" >> /var/log/nems/nems-osb.log
   elif [[ $response == 4 ]]; then
-    echo "`date`::$response::Failed::Invalid credentials" >> /var/log/nems/nems-osb.log
+    echo "`date`::2::Failed::Invalid credentials" >> /var/log/nems/nems-osb.log
   elif [[ $response == 5 ]]; then
-    echo "`date`::$response::Failed::Bad query" >> /var/log/nems/nems-osb.log
+    echo "`date`::2::Failed::Bad query" >> /var/log/nems/nems-osb.log
   elif [[ $online == 0 ]]; then
-    echo "`date`::$response::Failed::No Internet Connection" >> /var/log/nems/nems-osb.log
+    echo "`date`::2::Failed::No Internet Connection" >> /var/log/nems/nems-osb.log
+  elif [[ $data == '' ]]; then
+    echo "`date`::2::Failed::NEMS Cloud Services did not respond to query" >> /var/log/nems/nems-osb.log
   else
-    echo "`date`::-::Failed::Unknown error" >> /var/log/nems/nems-osb.log # Replace code with unknown error (as it could be anything)
+    echo "`date`::2::Failed::Unknown error" >> /var/log/nems/nems-osb.log # Replace code with unknown error (as it could be anything)
   fi;
 
+elif [[ $cloudauth == '3' ]]; then # this account passes authentication
+    echo "`date`::2::Failed::No Internet Connection" >> /var/log/nems/nems-osb.log
 else
-    echo "`date`::-::Failed::Authentication Failed" >> /var/log/nems/nems-osb.log
+    echo "`date`::2::Failed::Authentication Failed" >> /var/log/nems/nems-osb.log
 fi

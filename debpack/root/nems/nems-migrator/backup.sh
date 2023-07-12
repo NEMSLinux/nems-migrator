@@ -13,6 +13,11 @@ ver=$(/usr/local/bin/nems-info nemsver)
 		nagvis="etc/maps/"
  fi
 
+ # Do not perform this operation if we are running a cleanup operation
+ if [[ -e /tmp/cleanup.lock ]]; then
+   exit 0
+ fi
+
  # Store some board data in the Windows-readable portion of the SD card
  # As requested by Marshman: https://forum.nemslinux.com/viewtopic.php?f=10&t=566
    alias=$(/usr/local/bin/nems-info alias)
