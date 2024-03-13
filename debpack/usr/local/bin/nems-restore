@@ -104,7 +104,8 @@ else
 
   # if this is an encrypted set, decrypt
   if [[ -f /tmp/nems_migrator_restore/tmp/private.tar.gz.gpg ]]; then
-    echo "This backup is encrypted."
+    echo
+    echo -e "\033[32mThis backup is encrypted.\033[0m"
     # Load Config
     osbpass=$(cat /usr/local/share/nems/nems.conf | grep osbpass | printf '%s' $(cut -n -d '=' -f 2))
 
