@@ -165,7 +165,6 @@ else
 
                                  if (( ! $(awk 'BEGIN {print ("$backupver" >= "'1.0'")}') )); then
                                    echo Backup file is from NEMS $backupver. Proceeding.
-                                   service $nagios stop
 
                                    # I know I warned you, but I love you too much to let you risk it.
                                    DATE=`date '+%Y-%m-%d %H:%M:%S'`
@@ -180,6 +179,13 @@ else
                                      confsrc=/etc/nagios3
                                      resourcesrc=/etc/nagios3
                                    fi
+
+                                   cp -fr /root/nems/nems-migrator/data/nagios/etc/* /usr/local/nagios/etc/
+                                   /bin/sed -i -- 's/nemsadmin/'"$username"'/g' /usr/local/nagios/etc/cgi.cfg
+
+                                   /usr/bin/systemctl stop monit
+                                   /usr/bin/systemctl stop nagios
+                                   /usr/bin/systemctl stop mysql
 
 #                                  echo "Source: /tmp/nems_migrator_restore$confsrc"
                                    if [[ -d "/tmp/nems_migrator_restore$confsrc" ]]; then
@@ -218,6 +224,10 @@ else
                                                 exit
                                          fi
 
+                                         # Reconcile all nems.conf configuration settings
+                                         if [[ -e /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf ]]; then
+                                           /root/nems/nems-migrator/data/reconcile-nems.sh /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf
+                                         fi
 
                                          # NagVis maps are stored differently in NEMS 1.0
                                          if [[ $backupver == "1.0" ]]; then
@@ -257,10 +267,11 @@ else
                                                          echo "You can re-create it by running the Generate command in NEMS NConf - nothing to worry about."
                                          fi
 
+
                                    # Get the username that the NEMS Server was using before it was backed up
                                    # Get NEMS username
                                    # From nems.conf
-                                   oldusername=`cat /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf | grep username |  printf '%s' $(cut -n -d '=' -f 2)`
+                                   oldusername=`cat /tmp/nems_migrator_restore/usr/local/share/nems/nems.conf | grep nemsuser |  printf '%s' $(cut -n -d '=' -f 2)`
                                    # Legacy support: from htpasswd
                                    if [[ $oldusername == "" ]]; then
                                      oldusername=`cat /tmp/nems_migrator_restore/var/www/htpasswd | cut -d: -f1`
@@ -294,14 +305,15 @@ else
                                    fi
 
 
+
                                    # This may cause errors, but at least it gives them the old logs.
                                    cp -Rfp /tmp/nems_migrator_restore/var/log/* /var/log
 
-                                   service mysql start
-                                   service $nagios start
+                                   /usr/bin/systemctl start mysql
+                                   /usr/bin/systemctl start nagios
+                                   /usr/bin/systemctl start monit
 
-                                  cp -fr /root/nems/nems-migrator/data/nagios/etc/* /usr/local/nagios/etc/
-                                  /bin/sed -i -- 's/nemsadmin/'"$username"'/g' /usr/local/nagios/etc/cgi.cfg
+
 
                                   # Remove nconf history, should it exist
                                   mysql -u nconf -pnagiosadmin nconf -e "TRUNCATE History"
