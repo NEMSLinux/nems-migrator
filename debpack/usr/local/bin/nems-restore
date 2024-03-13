@@ -88,7 +88,8 @@ else
                 echo This will WIPE OUT the configuration on this NEMS deployment.
                 echo The configuration will be replaced with the one stored in your NEMS backup.
                 echo ""
-                echo Please do this on a fresh deployment of NEMS to prevent data loss.
+                echo -e "\033[97mBACKUP YOUR CONFIGURATION FIRST\033[0m"
+                echo ""
                 echo "I am not responsible for this script breaking everything you have done :)"
                 echo Backup, backup, backup.
 
@@ -106,6 +107,7 @@ else
   if [[ -f /tmp/nems_migrator_restore/tmp/private.tar.gz.gpg ]]; then
     echo
     echo -e "\033[32mThis backup is encrypted.\033[0m"
+    echo
     # Load Config
     osbpass=$(cat /usr/local/share/nems/nems.conf | grep osbpass | printf '%s' $(cut -n -d '=' -f 2))
 
@@ -118,6 +120,8 @@ else
         exit
       fi
       echo "Attempting to decrypt with that key... "
+    else
+      echo "Attempting to decrypt the key you have set in NEMS SST... "
     fi;
 
     /usr/bin/gpg --yes --batch --passphrase="::$osbpass::291ea559-471e-4bda-bb7d-774e782f84c1::" --decrypt /tmp/nems_migrator_restore/tmp/private.tar.gz.gpg > /tmp/nems_migrator_restore/tmp/private.tar.gz
@@ -125,7 +129,8 @@ else
 
     if ! tar -tf /tmp/nems_migrator_restore/tmp/private.tar.gz &> /dev/null; then
       echo ""
-      echo "Error with backup. Are you sure you're using the hardware and OSB Key that match this backup?"
+      echo -e "\033[91mError with backup.\033[0m Are you sure you're using the decryption key that matches this backup?"
+      echo
       echo "Does the Encryption/Decryption password you entered match what it was when the backup was"
       echo "created?"
       echo ""
@@ -134,7 +139,7 @@ else
       exit
     else
       echo ""
-      echo "Successfully decrypted."
+      echo -e "\033[97mSuccessfully decrypted.\033[0m"
       echo ""
     fi
 
@@ -325,6 +330,8 @@ else
                                     mysql -t -u nconf -pnagiosadmin nconf -e "UPDATE ConfigValues SET attr_value='$email' WHERE fk_id_attr=55;"
 
 
+                                   echo ""
+                                   echo -e "\033[97mRESTORE COMPLETE\033[0m"
                                    echo ""
                                    echo I hope everything worked okay for you.
                                    echo Please let me know if you had any trouble.
