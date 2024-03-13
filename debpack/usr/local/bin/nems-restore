@@ -171,6 +171,7 @@ else
 
                                  if (( ! $(awk 'BEGIN {print ("$backupver" >= "'1.0'")}') )); then
                                    echo Backup file is from NEMS $backupver. Proceeding.
+                                   printf . && sleep 1 && printf . && sleep 1 && printf . && sleep 1 && printf . && sleep 1 && printf . && sleep 1 && echo && echo
 
                                    # I know I warned you, but I love you too much to let you risk it.
                                    DATE=`date '+%Y-%m-%d %H:%M:%S'`
