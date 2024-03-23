@@ -5,7 +5,7 @@ ver=$(/usr/local/bin/nems-info nemsver)
  if [[ $ver = "" ]]; then
    echo Could not detect the version of your NEMS server. Is this NEMS Linux?
    echo Cannot continue.
-   exit
+   exit 1
  fi
  if [[ $ver = "1.0" ]]; then
 		nagvis="maps/"
@@ -23,12 +23,17 @@ ver=$(/usr/local/bin/nems-info nemsver)
    alias=$(/usr/local/bin/nems-info alias)
    hwid=$(/usr/local/bin/nems-info hwid)
    platformname=$(/usr/local/bin/nems-info platform-name)
-   echo "NEMS Server System Information" > /boot/NEMS_SERVER.txt
-   echo "------------------------------" >> /boot/NEMS_SERVER.txt
-   echo "Platform:           $platformname" >> /boot/NEMS_SERVER.txt
-   echo "NEMS Linux Version: $ver" >> /boot/NEMS_SERVER.txt
-   echo "NEMS HWID:          $hwid" >> /boot/NEMS_SERVER.txt
-   echo "NEMS Server Alias:  $alias" >> /boot/NEMS_SERVER.txt
+   if [[ -d /boot/firmware ]]; then
+     infofile="/boot/firmware/NEMS_SERVER.txt"
+   else
+     infofile="/boot/NEMS_SERVER.txt"
+   fi
+   echo "NEMS Server System Information" > $infofile
+   echo "------------------------------" >> $infofile
+   echo "Platform:           $platformname" >> $infofile
+   echo "NEMS Linux Version: $ver" >> $infofile
+   echo "NEMS HWID:          $hwid" >> $infofile
+   echo "NEMS Server Alias:  $alias" >> $infofile
 
 
  # Only create a backup file every 30 minutes.
