@@ -7,11 +7,8 @@ ver=$(/usr/local/bin/nems-info nemsver)
    echo Cannot continue.
    exit 1
  fi
- if [[ $ver = "1.0" ]]; then
-		nagvis="maps/"
-   else
-		nagvis="etc/maps/"
- fi
+
+ nagvis="etc/maps/"
 
  # Do not perform this operation if we are running a cleanup operation
  if [[ -e /tmp/cleanup.lock ]]; then
@@ -48,31 +45,23 @@ ver=$(/usr/local/bin/nems-info nemsver)
  mainpriv=''
  mainpub=''
 
- if (( $(awk 'BEGIN {print ("'$ver'" >= "'1.4'")}') )); then
-   nagios=nagios
-   # Modern Configs
-   mainpriv="/usr/local/nagios/etc/resource.cfg \
-   "
-   mainpub="    /usr/local/nagios/etc/cgi.cfg \
+
+ # Nagios-specific
+ nagios=nagios
+ mainpriv="/usr/local/nagios/etc/resource.cfg"
+ mainpub="    /usr/local/nagios/etc/cgi.cfg \
      /etc/nems/conf/Default_collector/ \
-     /etc/nems/conf/global/ \
-   "
- else
-   nagios=nagios3
-   # Legacy Configs
-   mainpriv="/etc/nagios3/resource.cfg \
-   "
-   mainpub="    /etc/nagios3/cgi.cfg \
-     /etc/nagios3/Default_collector/ \
-     /etc/nagios3/global/ \
-   "
- fi
- # Config shared among all versions
+     /etc/nems/conf/global/"
+
+ # Sensitive files or folders backup
  mainpriv="$mainpriv \
     /usr/local/share/nems/nems.conf \
+    /usr/local/share/nems/database \
     /var/www/nconf/config \
     /var/www/nconf/output \
  "
+
+ # Standard files to backup
  mainpub="$mainpub \
   /var/www/htpasswd \
   /etc/nagvis/$nagvis \
@@ -116,25 +105,15 @@ else
  addpublic=''
  addprivate=''
 
- if (( $(awk 'BEGIN {print ("'$ver'" >= "'1.2'")}') )); then
-   # Additional items to backup if version matches
-   addpublic="   /etc/webmin \
-   "
-   if [[ -d /etc/rpimonitor ]]; then # Only exists on Raspberry Pi. NEMS 1.4+ supports other platforms.
-     addpublic="$addpublic \
-       /etc/rpimonitor \
-     "
-   fi
- fi
-
- if (( $(awk 'BEGIN {print ("'$ver'" >= "'1.3'")}') )); then
-   # Additional items to backup if version matches
-   addprivate="$addprivate \
-     /var/www/certs \
+ if [[ -d /etc/rpimonitor ]]; then # Only exists on Raspberry Pi. NEMS 1.4+ supports other platforms.
+   addpublic="$addpublic \
+     /etc/rpimonitor \
    "
  fi
 
-# systemctl stop $nagios
+ addprivate="$addprivate \
+   /var/www/certs \
+ "
 
 # Create the archive containing sensitive information
  privfile='/tmp/private.tar.gz'
@@ -167,7 +146,6 @@ else
 FILESIZE=$(stat -c%s "/tmp/backup.nems")
 echo $FILESIZE > /var/www/html/backup/snapshot/size.log
 
-# systemctl start $nagios
 
  rm $privfile
 
